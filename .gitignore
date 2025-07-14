@@ -1,0 +1,23 @@
+# Ignore Python cache files
+__pycache__/
+*.pyc
+*.pyo
+
+# Ignore virtual environment
+venv/
+ENV/
+env/
+.venv/
+
+# Ignore PyInstaller build artifacts
+build/
+dist/
+*.spec
+
+# Ignore sensitive app data
+assets/password_data.json
+assets/secret.key
+
+# Ignore system files
+.DS_Store
+Thumbs.db
