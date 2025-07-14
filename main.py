@@ -1,20 +1,45 @@
 #Import's Modules
 import tkinter as tk
 from tkinter import messagebox
-import json
-import pyperclip
-from core.crypto_util import Encryptor
+import json # Import the json module to handle reading and writing data in JSON format
+import pyperclip # Import pyperclip to enable copying text (like passwords) to the system clipboard
+import sys # Used to access interpreter-specific variables (like _MEIPASS when using PyInstaller)
+import os # Used for file path and directory handling
+from core.crypto_util import Encryptor 
 from core.password_logic import PasswordGenerator
-import sys
-import os
 
+# Define a function to get the absolute path to a resource file
 def resource_path(relative_path):
-    """ Get absolute path to resource (works for .py and bundled .exe) """
+    """ 
+    Get the absolute path to a resource file.
+    This allows the app to locate files (like icons or data) whether it's being run as a .py script 
+    OR as a bundled .exe created by PyInstaller.
+    PyInstaller extracts all files to a temporary directory at runtime (stored in sys._MEIPASS),
+    so we use that if available. Otherwise, fall back to the current working directory.  
+    """
     try:
-        base_path = sys._MEIPASS
+        base_path = sys._MEIPASS  # When running as a bundled .exe, PyInstaller sets this to the temp path
     except AttributeError:
-        base_path = os.path.abspath(".")
+        base_path = os.path.abspath(".") # When running from source (.py), use the current directory
+    
+    # Join the base path with the relative file path and return the full absolute path
     return os.path.join(base_path, relative_path)
+
+# Create a writable app data folder for saving JSON and keys
+# Get the path to the user's AppData\Roaming folder (e.g., C:\Users\YourName\AppData\Roaming) 
+# and append 'VaultKey' to create a unique directory for this app
+APP_DIR = os.path.join(os.getenv("APPDATA"), "VaultKey")
+
+#Create the VaultKey directory if it doesn't already exist
+#'exist_ok=True' prevents an error if the folder is already present
+os.makedirs(APP_DIR, exist_ok=True)
+
+# Define the full path where the encrypted password data will be stored
+USER_DATA_PATH = os.path.join(APP_DIR, "password_data.json")
+
+# Define the full path where the secret encryption key will be stored
+USER_KEY_PATH = os.path.join(APP_DIR, "secret.key")
+
 
 
 #Create Class
@@ -127,10 +152,21 @@ class PasswordManager():
             messagebox.showinfo(title="Oops", message="Please don't leave any field Empty!") 
             return
         
-        data_path = resource_path("assets/password_data.json") 
+        # First-time setup: check if the writable password data file exists
+        if not os.path.exists(USER_DATA_PATH):
+            try:
+                # Try to open the bundled read-only asset file inside the .exe or source folder
+                with open(resource_path("assets/password_data.json"), "r") as src:
+                    # Create a new writable copy in AppData (or overwrite if needed)
+                    with open(USER_DATA_PATH, "w") as dst:
+                        dst.write(src.read())  # Copy contents from bundled file to AppData
+            except FileNotFoundError:
+                # If the bundled asset file doesn't exist, create an empty JSON file in AppData
+                with open(USER_DATA_PATH, "w") as f:
+                    f.write("{}")  # Start with an empty dictionary as JSON content
 
         try:
-            with open(data_path, "r") as data_file: #Open Json file in Read mode
+            with open(USER_DATA_PATH, "r") as data_file: #Open Json file in Read mode
                 data = json.load(data_file) #Read data from json file
         except (FileNotFoundError, json.JSONDecodeError): #If file not found or Empty
             data = {} #It starts with a blank dictionary.
@@ -139,7 +175,7 @@ class PasswordManager():
         data.update(new_data) #If the website already exists, it overwrites the old entry with the new one.
 
         #Saves the updated data dictionary back to password_data.json.
-        with open(data_path, "w") as data_file: 
+        with open(USER_DATA_PATH, "w") as data_file: 
             json.dump(data, data_file, indent=4) # Formatting it nicely (indent=4)
 
         #Clears all fields for the next entry.
@@ -154,23 +190,37 @@ class PasswordManager():
     #Search Details in file
     def search(self):
         website = self.website_entry.get().capitalize() #Get Website name
-        if len(website) != 0: #Check the website filed is empty or not
-            data_path = resource_path("assets/password_data.json")
-            try:
-                with open(data_path, "r") as data_file: #Open Json file in Read mode
-                    data = json.load(data_file) #Read data from json file 
-                    email = data[website]["Email"] #Get email from data
-                    encrypted_pw = data[website]["Password"]
-                    password = self.encryptor.decrypt(encrypted_pw) #Get password from data
-                    messagebox.showinfo(title=website, message=f"Email: {email}\nPassword: {password}") #Show search result in messagebox
-            except FileNotFoundError: #IF file not found then create it
-                open(data_path, "w") #Open Json file in Write mode
-            except json.JSONDecodeError: #If File is empty 
-                messagebox.showerror(title="Error", message="File is empty or corrupted.") #Show File is empty or corrupted in messagebox
-            except KeyError: #Website not in file
-                messagebox.showinfo(title="Not Found", message=f"No details for {website}") #Show website not found in messagebox
-        else:
+        
+        if len(website) == 0: #Check the website filed is empty or not
             messagebox.showwarning(title="Warning", message="Website field is empty.")
+            return
+        
+        # First-time setup: check if the writable password data file exists
+        if not os.path.exists(USER_DATA_PATH):
+            try:
+                # Try to open the bundled read-only asset file inside the .exe or source folder
+                with open(resource_path("assets/password_data.json"), "r") as src:
+                    # Create a new writable copy in AppData (or overwrite if needed)
+                    with open(USER_DATA_PATH, "w") as dst:
+                        dst.write(src.read())  # Copy contents from bundled file to AppData
+            except FileNotFoundError:
+                # If the bundled asset file doesn't exist, create an empty JSON file in AppData
+                with open(USER_DATA_PATH, "w") as f:
+                    f.write("{}")  # Start with an empty dictionary as JSON content
+
+        try:
+            with open(USER_DATA_PATH, "r") as data_file: #Open Json file in Read mode
+                data = json.load(data_file) #Read data from json file 
+                email = data[website]["Email"] #Get email from data
+                encrypted_pw = data[website]["Password"]
+                password = self.encryptor.decrypt(encrypted_pw) #Get password from data
+                messagebox.showinfo(title=website, message=f"Email: {email}\nPassword: {password}") #Show search result in messagebox
+        except FileNotFoundError: #IF file not found then create it
+            open(USER_DATA_PATH, "w") #Open Json file in Write mode
+        except json.JSONDecodeError: #If File is empty 
+            messagebox.showerror(title="Error", message="File is empty or corrupted.") #Show File is empty or corrupted in messagebox
+        except KeyError: #Website not in file
+            messagebox.showinfo(title="Not Found", message=f"No details for {website}") #Show website not found in messagebox
 
 
 if __name__ == "__main__":

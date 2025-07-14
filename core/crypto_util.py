@@ -10,7 +10,14 @@ def resource_path(relative_path):
         base_path = os.path.abspath(".")
     return os.path.join(base_path, relative_path)
 
-KEY_PATH = resource_path("assets/secret.key")
+# Create a writable app data folder for saving JSON and keys
+APP_DIR = os.path.join(os.getenv("APPDATA"), "VaultKey")
+os.makedirs(APP_DIR, exist_ok=True)
+
+USER_DATA_PATH = os.path.join(APP_DIR, "password_data.json")
+USER_KEY_PATH = os.path.join(APP_DIR, "secret.key")
+
+KEY_PATH = USER_KEY_PATH
 
 def generate_key():
     os.makedirs(os.path.dirname(KEY_PATH), exist_ok=True)

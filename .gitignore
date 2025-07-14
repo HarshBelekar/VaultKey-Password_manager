@@ -1,23 +1,28 @@
-# Ignore Python cache files
+# 🔁 Python cache and compiled files
 __pycache__/
 *.pyc
 *.pyo
 
-# Ignore virtual environment
+# 🧪 Virtual environments
 venv/
 ENV/
 env/
 .venv/
 
-# Ignore PyInstaller build artifacts
+# 📦 PyInstaller build artifacts
 build/
 dist/
 *.spec
 
-# Ignore sensitive app data
+# 🔐 Sensitive app data (stored in development assets folder)
 assets/password_data.json
 assets/secret.key
 
-# Ignore system files
+# 💻 System files
 .DS_Store
 Thumbs.db
+
+# 🗃️ Windows AppData user storage (used in .exe mode)
+# NOTE: Use forward slashes and wildcard to prevent platform mismatch
+/AppData/Roaming/VaultKey/
+/**/AppData/Roaming/VaultKey/
