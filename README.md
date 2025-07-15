@@ -7,6 +7,9 @@ A sleek and secure **open-source** desktop password manager called `VaultKey` â€
 ![Tkinter](https://img.shields.io/badge/GUI-Tkinter-lightgrey)
 ![License: MIT](https://img.shields.io/badge/License-MIT-green)
 ![Built with Love](https://img.shields.io/badge/Built%20with-%E2%9D%A4-red)
+![Repo Size](https://img.shields.io/github/repo-size/HarshBelekar/VaultKey-Password_manager)
+![Last Commit](https://img.shields.io/github/last-commit/HarshBelekar/VaultKey-Password_manager)
+![Issues](https://img.shields.io/github/issues/HarshBelekar/VaultKey-Password_manager)
 
 ---
 
